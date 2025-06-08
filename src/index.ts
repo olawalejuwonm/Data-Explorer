@@ -8,5 +8,7 @@ const files = fs.readdirSync(dataDir);
 console.log('Files in data folder:');
 files.forEach(file => console.log(file));
 
-console.log('Excel Data Merger CLI - To be implemented');
+
+
+// console.log('Excel Data Merger CLI - To be implemented');
 // TODO: Implement CLI argument parsing, merging logic, and export functionality
