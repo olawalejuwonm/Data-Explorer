@@ -194,8 +194,33 @@ const mergedStringDates = merged.map(row => {
 
 // Write merged data to a new Excel file (Desktop only)
 const outputWb = XLSX.utils.book_new();
-const outputWs = XLSX.utils.json_to_sheet(mergedStringDates, { cellDates: false });
+// Define the desired column order
+const orderedHeaders = [
+  'First Name',
+  'Last name',
+  'Phone Number (Please add country code e.g. +44 for UK lines)',
+  'Email Address',
+  'Country',
+  'Date of Birth'
+];
+// Get all unique keys from the merged data
+const allKeys = Array.from(new Set(mergedStringDates.flatMap(row => Object.keys(row))));
+// Add any remaining columns not in the ordered list
+const finalHeaders = [
+  ...orderedHeaders,
+  ...allKeys.filter(k => !orderedHeaders.includes(k))
+];
+const outputWs = XLSX.utils.json_to_sheet(mergedStringDates, { header: finalHeaders, cellDates: false });
 XLSX.utils.book_append_sheet(outputWb, outputWs, 'Merged');
+
+// Bold the headers (works in some viewers)
+const headerRange = XLSX.utils.decode_range(outputWs['!ref']!);
+for (let C = headerRange.s.c; C <= headerRange.e.c; ++C) {
+  const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });
+  if (!outputWs[cellAddress]) continue;
+  outputWs[cellAddress].s = { font: { bold: true } };
+}
+
 const desktopOutputPath = 'C:/Users/Micheal/OneDrive - Swansea University/Desktop/merged_output.xlsx';
 try {
   XLSX.writeFile(outputWb, desktopOutputPath, { cellDates: false });
