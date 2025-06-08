@@ -62,7 +62,7 @@ if (files.includes(contactFile)) {
 }
 console.log('Contact Data:');
 console.log(contactData.slice(0, 5)); // Log first 5 rows for preview
-console.log(contactData.length, 'rows read from Contact Information (Responses).xlsx');
+// console.log(contactData.length, 'rows read from Contact Information (Responses).xlsx');
 // Read TARM-Updated-Diaspora-Disciples.xlsx
 if (files.includes(diasporaFile)) {
   const filePath = path.join(dataDir, diasporaFile);
@@ -125,11 +125,62 @@ function excelSerialToDateString(serial: number): string {
   return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
-// Convert all date fields to string to avoid Excel serial conversion
+// Remove duplicate NAME, SURNAME fields from merged output
 const mergedStringDates = merged.map(row => {
   const newRow: any = {};
   for (const key in row) {
     if (row.hasOwnProperty(key)) {
+      // Merge both Wedding Anniversary fields into a single 'Wedding Anniversary' column
+      if (key === 'When is your marriage anniversary?' || key === 'Wedding Anniversary') {
+        if (!('Wedding Anniversary' in newRow)) {
+          newRow['Wedding Anniversary'] = row['Wedding Anniversary'] || row['When is your marriage anniversary?'];
+        }
+        continue;
+      }
+      // Merge both Phone Number fields into a single 'Phone Number (Please add country code e.g. +44 for UK lines)' column
+      if (key === 'Phone Number (Please add country code e.g. +44 for UK lines)' || key === 'Phone number') {
+        if (!('Phone Number (Please add country code e.g. +44 for UK lines)' in newRow)) {
+          newRow['Phone Number (Please add country code e.g. +44 for UK lines)'] = row['Phone Number (Please add country code e.g. +44 for UK lines)'] || row['Phone number'];
+        }
+        continue;
+      }
+      // Merge both Email fields into a single 'Email Address' column
+      if (key === 'Email Address' || key === 'Email') {
+        if (!('Email Address' in newRow)) {
+          newRow['Email Address'] = row['Email Address'] || row['Email'];
+        }
+        continue;
+      }
+      // Merge both Date of Birth fields into a single 'Date of Birth' column
+      if (key === 'Date of Birth' || key === 'DOB') {
+        if (!('Date of Birth' in newRow)) {
+          let dobVal = row['Date of Birth'] || row['DOB'];
+          // Convert Excel serial number to date string if needed
+          if (typeof dobVal === 'number' && dobVal > 20000 && dobVal < 90000) {
+            dobVal = excelSerialToDateString(dobVal).split(' ')[0]; // Only keep the date part
+          }
+          newRow['Date of Birth'] = dobVal;
+        }
+        continue;
+      }
+      // Merge both Marrital Status fields into a single 'Marrital Status' column
+      if (key === 'Marrital Status' || key === 'Are you married?') {
+        if (!('Marrital Status' in newRow)) {
+          newRow['Marrital Status'] = row['Marrital Status'] || row['Are you married?'];
+        }
+        continue;
+      }
+      // Merge both country fields into a single 'Country' column
+      if (key === 'Country of Residence' || key === 'Please state the country where you currently reside?') {
+        if (!('Country' in newRow)) {
+          newRow['Country'] = row['Country of Residence'] || row['Please state the country where you currently reside?'];
+        }
+        continue;
+      }
+      // Skip duplicate NAME and SURNAME if First Name and Last name exist
+      if ((key === 'NAME' && 'First Name' in row) || (key === 'SURNAME' && 'Last name' in row)) {
+        continue;
+      }
       let val = row[key];
       // Convert Excel serial numbers to date string if in valid range
       if (typeof val === 'number' && val > 20000 && val < 90000) {
@@ -141,26 +192,14 @@ const mergedStringDates = merged.map(row => {
   return newRow;
 });
 
-// Write merged data to a new Excel file
+// Write merged data to a new Excel file (Desktop only)
 const outputWb = XLSX.utils.book_new();
 const outputWs = XLSX.utils.json_to_sheet(mergedStringDates, { cellDates: false });
 XLSX.utils.book_append_sheet(outputWb, outputWs, 'Merged');
-const outputFilePath = path.join(dataDir, 'merged_output.xlsx');
-try {
-  XLSX.writeFile(outputWb, outputFilePath, { cellDates: false });
-  console.log('Merged Excel file written to data/merged_output.xlsx');
-} catch (err) {
-  if (err && typeof err === 'object' && 'code' in err && (err as any).code === 'EBUSY') {
-    console.error('Error: merged_output.xlsx is open in another program. Please close it and try again.');
-  } else {
-    console.error('Error writing merged_output.xlsx:', err);
-  }
-}
-
 const desktopOutputPath = 'C:/Users/Micheal/OneDrive - Swansea University/Desktop/merged_output.xlsx';
 try {
   XLSX.writeFile(outputWb, desktopOutputPath, { cellDates: false });
-  console.log('Merged Excel file also written to Desktop as merged_output.xlsx');
+  console.log('Merged Excel file written to Desktop as merged_output.xlsx');
 } catch (err) {
   if (err && typeof err === 'object' && 'code' in err && (err as any).code === 'EBUSY') {
     console.error('Error: merged_output.xlsx is open on your Desktop. Please close it and try again.');
