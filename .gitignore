@@ -1,0 +1,24 @@
+# Node
+node_modules/
+dist/
+.env
+*.log
+
+# TypeScript
+*.tsbuildinfo
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Excel
+*.xlsx
+*.xls
+*.xlsm
+
+# Misc
+*.bak
+*.tmp
