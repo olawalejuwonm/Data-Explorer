@@ -70,9 +70,15 @@ if (files.includes(diasporaFile)) {
 
 // Build a map for fast lookup
 function getKeyFromContactInfo(row: any) {
+  if (row['Email Address']) {
+    return String(row['Email Address']).trim().toLowerCase();
+  }
   return `${row['First Name'] || ''} ${row['Last name'] || ''}`.trim().toLowerCase();
 }
 function getKeyFromDiaspora(row: any) {
+  if (row['Email']) {
+    return String(row['Email']).trim().toLowerCase();
+  }
   return `${row['NAME'] || ''} ${row['SURNAME'] || ''}`.trim().toLowerCase();
 }
 
@@ -116,5 +122,17 @@ try {
     console.error('Error: merged_output.xlsx is open in another program. Please close it and try again.');
   } else {
     console.error('Error writing merged_output.xlsx:', err);
+  }
+}
+
+const desktopOutputPath = 'C:/Users/Micheal/OneDrive - Swansea University/Desktop/merged_output.xlsx';
+try {
+  XLSX.writeFile(outputWb, desktopOutputPath);
+  console.log('Merged Excel file also written to Desktop as merged_output.xlsx');
+} catch (err) {
+  if (err && typeof err === 'object' && 'code' in err && (err as any).code === 'EBUSY') {
+    console.error('Error: merged_output.xlsx is open on your Desktop. Please close it and try again.');
+  } else {
+    console.error('Error writing merged_output.xlsx to Desktop:', err);
   }
 }
