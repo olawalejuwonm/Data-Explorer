@@ -22,3 +22,7 @@ Thumbs.db
 # Misc
 *.bak
 *.tmp
+
+# Data files
+/data/*
+!/data/.gitkeep
